@@ -31,7 +31,10 @@ gem "omniauth-google-oauth2"
 gem 'doorkeeper'
 
 # logical delete.
-gem "paranoia", "~> 2.2"
+gem 'paranoia', '~> 2.2'
+
+# markdown.
+gem 'kramdown'
 
 group :development, :test do
   # Use Puma as the app server
@@ -40,6 +43,10 @@ group :development, :test do
   gem 'byebug', platform: :mri
   # Use oauth2 for Api login.
   gem 'oauth2'
+  # Annotate db schema.
+  gem 'annotate'
+  # yardoc.
+  gem 'yard'
 end
 
 group :development do
