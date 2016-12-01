@@ -30,6 +30,9 @@ gem "omniauth-google-oauth2"
 # Use doorkeeper for OAuth Provider.
 gem 'doorkeeper'
 
+# logical delete.
+gem "paranoia", "~> 2.2"
+
 group :development, :test do
   # Use Puma as the app server
   gem 'puma', '~> 3.0'
