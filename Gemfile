@@ -50,6 +50,11 @@ group :development, :test do
   gem 'annotate'
   # yardoc.
   gem 'yard'
+
+  gem 'pry-rails'
+  gem 'pry-doc'
+  gem 'pry-byebug'
+  gem 'pry-stack_explorer'
 end
 
 group :development do
