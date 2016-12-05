@@ -36,6 +36,9 @@ gem 'paranoia', '~> 2.2'
 # markdown.
 gem 'kramdown'
 
+# log format.
+gem "lograge"
+
 group :development, :test do
   # Use Puma as the app server
   gem 'puma', '~> 3.0'
