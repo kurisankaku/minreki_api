@@ -18,9 +18,6 @@ gem 'mysql2'
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 # gem 'rack-cors'
 
-# Use grape that is a REST-like API framework.
-gem 'grape'
-
 # Use devise for Authentication.↲
 gem 'devise'
 
