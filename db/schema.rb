@@ -13,8 +13,7 @@
 ActiveRecord::Schema.define(version: 20161201034452) do
 
   create_table "users", id: :bigint, force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC" do |t|
-    t.string   "account_name",                        null: false
-    t.string   "user_name",                           null: false
+    t.string   "name",                                null: false
     t.string   "uid"
     t.string   "token"
     t.string   "email",                  default: "", null: false
@@ -38,10 +37,10 @@ ActiveRecord::Schema.define(version: 20161201034452) do
     t.datetime "created_at",                          null: false
     t.datetime "updated_at",                          null: false
     t.datetime "deleted_at"
-    t.index ["account_name"], name: "index_users_on_account_name", unique: true, using: :btree
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true, using: :btree
     t.index ["deleted_at"], name: "index_users_on_deleted_at", using: :btree
     t.index ["email"], name: "index_users_on_email", unique: true, using: :btree
+    t.index ["name"], name: "index_users_on_name", unique: true, using: :btree
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true, using: :btree
   end
