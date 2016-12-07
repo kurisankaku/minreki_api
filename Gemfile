@@ -39,6 +39,9 @@ gem 'kramdown'
 # log format.
 gem "lograge"
 
+# Brings convention over configuration to your JSON generation.
+gem 'active_model_serializers', '~> 0.10.0'
+
 group :development, :test do
   # Use Puma as the app server
   gem 'puma', '~> 3.0'
