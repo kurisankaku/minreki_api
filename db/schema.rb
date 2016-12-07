@@ -10,7 +10,50 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20161201034452) do
+ActiveRecord::Schema.define(version: 20161207071158) do
+
+  create_table "oauth_access_grants", id: :bigint, force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC" do |t|
+    t.bigint   "resource_owner_id",               null: false
+    t.integer  "application_id",                  null: false
+    t.string   "token",                           null: false
+    t.integer  "expires_in",                      null: false
+    t.text     "redirect_uri",      limit: 65535, null: false
+    t.string   "scopes"
+    t.datetime "revoked_at"
+    t.datetime "created_at",                      null: false
+    t.datetime "updated_at",                      null: false
+    t.index ["application_id"], name: "fk_rails_b4b53e07b8", using: :btree
+    t.index ["resource_owner_id"], name: "fk_rails_330c32d8d9", using: :btree
+    t.index ["token"], name: "index_oauth_access_grants_on_token", unique: true, using: :btree
+  end
+
+  create_table "oauth_access_tokens", id: :bigint, force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC" do |t|
+    t.bigint   "resource_owner_id",                   null: false
+    t.integer  "application_id",                      null: false
+    t.string   "token",                               null: false
+    t.string   "refresh_token"
+    t.integer  "expires_in"
+    t.string   "scopes"
+    t.string   "previous_refresh_token", default: "", null: false
+    t.datetime "revoked_at"
+    t.datetime "created_at",                          null: false
+    t.datetime "updated_at",                          null: false
+    t.index ["application_id"], name: "fk_rails_732cb83ab7", using: :btree
+    t.index ["refresh_token"], name: "index_oauth_access_tokens_on_refresh_token", unique: true, using: :btree
+    t.index ["resource_owner_id"], name: "index_oauth_access_tokens_on_resource_owner_id", using: :btree
+    t.index ["token"], name: "index_oauth_access_tokens_on_token", unique: true, using: :btree
+  end
+
+  create_table "oauth_applications", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC" do |t|
+    t.string   "name",                       null: false
+    t.string   "uid",                        null: false
+    t.string   "secret",                     null: false
+    t.text     "redirect_uri", limit: 65535, null: false
+    t.string   "scopes",                     null: false
+    t.datetime "created_at",                 null: false
+    t.datetime "updated_at",                 null: false
+    t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true, using: :btree
+  end
 
   create_table "users", id: :bigint, force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC" do |t|
     t.string   "name",                                null: false
@@ -45,4 +88,8 @@ ActiveRecord::Schema.define(version: 20161201034452) do
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true, using: :btree
   end
 
+  add_foreign_key "oauth_access_grants", "oauth_applications", column: "application_id"
+  add_foreign_key "oauth_access_grants", "users", column: "resource_owner_id"
+  add_foreign_key "oauth_access_tokens", "oauth_applications", column: "application_id"
+  add_foreign_key "oauth_access_tokens", "users", column: "resource_owner_id"
 end
