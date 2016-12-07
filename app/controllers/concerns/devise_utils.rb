@@ -5,7 +5,7 @@ module DeviseUtils
 
   # Gets the actual resource stored in the instance variable
   def resource
-    instance_variable_get(:"@{#resource_name}")
+    instance_variable_get(:"@#{resource_name}")
   end
 
   # Sets the resource creating an instance variable
