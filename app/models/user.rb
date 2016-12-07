@@ -7,8 +7,7 @@
 # Name                          | Type               | Attributes
 # ----------------------------- | ------------------ | ---------------------------
 # **`id`**                      | `integer`          | `not null, primary key`
-# **`account_name`**            | `string(255)`      | `not null`
-# **`user_name`**               | `string(255)`      | `not null`
+# **`name`**                    | `string(255)`      | `not null`
 # **`uid`**                     | `string(255)`      |
 # **`token`**                   | `string(255)`      |
 # **`email`**                   | `string(255)`      | `default(""), not null`
@@ -35,14 +34,14 @@
 #
 # ### Indexes
 #
-# * `index_users_on_account_name` (_unique_):
-#     * **`account_name`**
 # * `index_users_on_confirmation_token` (_unique_):
 #     * **`confirmation_token`**
 # * `index_users_on_deleted_at`:
 #     * **`deleted_at`**
 # * `index_users_on_email` (_unique_):
 #     * **`email`**
+# * `index_users_on_name` (_unique_):
+#     * **`name`**
 # * `index_users_on_reset_password_token` (_unique_):
 #     * **`reset_password_token`**
 # * `index_users_on_unlock_token` (_unique_):
