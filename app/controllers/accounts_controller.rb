@@ -1,7 +1,7 @@
 # Management Accounts.
 class AccountsController < ApplicationController
   include DeviseUtils
-  before_action :configure_permitted_parameters, only: [:create]
+  include DeviseAuthentications
 
   # Show an account info.
   #
@@ -17,6 +17,7 @@ class AccountsController < ApplicationController
     binding.pry
     resource.save!
 
+    set_user_id_to_params(resource)
     # Check if active for authentication.
     # If it needs mail confirmation, etc.., return false.
     if resource.active_for_authentication?
@@ -34,8 +35,8 @@ class AccountsController < ApplicationController
         result = authorization.authorize
         render json: result.auth, status: 201
       else
-        render json: pre_auth.error_response.body, status: 400
         # TODO: Fase 2, return error view.
+        render json: pre_auth.error_response.body, status: 400
       end
     else
       render json: "mail okuttayo", status: 201
@@ -54,35 +55,6 @@ class AccountsController < ApplicationController
   #
   # @return [ActionController::Parameters] params
   def sign_up_params
-    devise_parameter_sanitizer.sanitize(:sign_up)
-  end
-
-  # Add permitted keys to sign_up parameters.
-  def configure_permitted_parameters
-    devise_parameter_sanitizer.permit(:sign_up, keys: [:name])
-  end
-
-  # Get PreAuthorization instance by params.
-  #
-  # @return [OAuth::PreAuthorizaion] instance.
-  def pre_auth
-    @pre_auth ||= OAuth::PreAuthorization.new(Doorkeeper.configuration, server.client_via_uid, params)
-  end
-
-  # Return token if last authorize token which not revoked existed.
-  #
-  # @return [AccessToken] token.
-  def matching_token?
-    AccessToken.matching_token_for(pre_auth.client, current_resource_owner.id, pre_auth.scopes)
-  end
-
-  # Get an authorization instance.
-  def authorization
-    @authorization ||= strategy.request
-  end
-
-  # Get a strategy instance by params response_type.
-  def strategy
-    @strategy ||= server.authorization_request pre_auth.response_type
+    params.permit(:password, :password_confirmation, :name)
   end
 end

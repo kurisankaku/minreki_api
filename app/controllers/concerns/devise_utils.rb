@@ -37,4 +37,9 @@ module DeviseUtils
   def resource_params
     params.fetch(resource_name, {})
   end
+
+  # Sets id to user_id params.
+  def set_user_id_to_params(resource)
+    params[:user_id] = resource.id if resource.is_a?(User)
+  end
 end
