@@ -7,5 +7,5 @@ Rails.application.routes.draw do
       resource :email, only: [:update]
     end
   end
-  devise_for :users, only: :confirmation, controllers: { confirmations: 'accounts/confirmations'}
+  devise_for :users, skip: :all, failure_app: "Authenticate::FailureAppController"
 end
