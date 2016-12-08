@@ -1,59 +1,48 @@
-# ## Schema Information
-#
-# Table name: `users`
-#
-# ### Columns
-#
-# Name                          | Type               | Attributes
-# ----------------------------- | ------------------ | ---------------------------
-# **`id`**                      | `integer`          | `not null, primary key`
-# **`name`**                    | `string(255)`      | `not null`
-# **`uid`**                     | `string(255)`      |
-# **`token`**                   | `string(255)`      |
-# **`email`**                   | `string(255)`      | `default(""), not null`
-# **`encrypted_password`**      | `string(255)`      | `default(""), not null`
-# **`reset_password_token`**    | `string(255)`      |
-# **`reset_password_sent_at`**  | `datetime`         |
-# **`remember_created_at`**     | `datetime`         |
-# **`sign_in_count`**           | `integer`          | `default(0), not null`
-# **`current_sign_in_at`**      | `datetime`         |
-# **`last_sign_in_at`**         | `datetime`         |
-# **`current_sign_in_ip`**      | `string(255)`      |
-# **`last_sign_in_ip`**         | `string(255)`      |
-# **`confirmation_token`**      | `string(255)`      |
-# **`confirmed_at`**            | `datetime`         |
-# **`confirmation_sent_at`**    | `datetime`         |
-# **`unconfirmed_email`**       | `string(255)`      |
-# **`failed_attempts`**         | `integer`          | `default(0), not null`
-# **`unlock_token`**            | `string(255)`      |
-# **`locked_at`**               | `datetime`         |
-# **`lock_version`**            | `integer`          | `default(0), not null`
-# **`created_at`**              | `datetime`         | `not null`
-# **`updated_at`**              | `datetime`         | `not null`
-# **`deleted_at`**              | `datetime`         |
-#
-# ### Indexes
-#
-# * `index_users_on_confirmation_token` (_unique_):
-#     * **`confirmation_token`**
-# * `index_users_on_deleted_at`:
-#     * **`deleted_at`**
-# * `index_users_on_email` (_unique_):
-#     * **`email`**
-# * `index_users_on_name` (_unique_):
-#     * **`name`**
-# * `index_users_on_reset_password_token` (_unique_):
-#     * **`reset_password_token`**
-# * `index_users_on_unlock_token` (_unique_):
-#     * **`unlock_token`**
-#
-
 class User < ApplicationRecord
   acts_as_paranoid
-
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable and :omniauthable
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :trackable, :validatable,
          :confirmable, :lockable
+
+  # after_commit :send_pending_notifications
+  #
+  # protected
+  #
+  # def send_devise_notification(notification, *args)
+  #   # If the record is new or changed then delay the
+  #   # delivery until the after_commit callback otherwise
+  #   # send now because after_commit will not be called.
+  #   if new_record? || changed?
+  #     pending_notifications << [notification, args]
+  #   else
+  #     message = devise_mailer.send(notification, self, *args)
+  #     if message.respond_to?(:deliver_now)
+  #       message.deliver_now
+  #     else
+  #       message.deliver
+  #     end
+  #   end
+  # end
+  #
+  # def send_pending_notifications
+  #   pending_notifications.each do |notification, args|
+  #     message = devise_mailer.send(notification, self, *args)
+  #     if message.respond_to?(:deliver_now)
+  #       message.deliver_now
+  #     else
+  #       message.deliver
+  #     end
+  #   end
+  #
+  #   # Empty the pending notifications array because the
+  #   # after_commit hook can be called multiple times which
+  #   # could cause multiple emails to be sent.
+  #   pending_notifications.clear
+  # end
+  #
+  # def pending_notifications
+  #   @pending_notifications ||= []
+  # end
 end
