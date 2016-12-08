@@ -49,8 +49,6 @@ group :development, :test do
   gem 'byebug', platform: :mri
   # Use oauth2 for Api login.
   gem 'oauth2'
-  # Annotate db schema.
-  gem 'annotate'
   # yardoc.
   gem 'yard'
 
