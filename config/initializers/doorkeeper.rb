@@ -75,6 +75,7 @@ Doorkeeper.configure do
   # (Similar behaviour: https://developers.google.com/accounts/docs/OAuth2InstalledApp#choosingredirecturi)
   #
   # native_redirect_uri 'urn:ietf:wg:oauth:2.0:oob'
+  native_redirect_uri nil
 
   # Forces the usage of the HTTPS protocol in non-native redirect uris (enabled
   # by default in non-development environments). OAuth2 delegates security in
@@ -98,7 +99,7 @@ Doorkeeper.configure do
   #   http://tools.ietf.org/html/rfc6819#section-4.4.2
   #   http://tools.ietf.org/html/rfc6819#section-4.4.3
   #
-  # grant_flows %w(authorization_code client_credentials)
+  grant_flows %w(authorization_code client_credentials implicit)
 
   # Under some circumstances you might want to have applications auto-approved,
   # so that the user skips the authorization step.

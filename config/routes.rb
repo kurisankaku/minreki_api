@@ -8,6 +8,7 @@ Rails.application.routes.draw do
     end
 
     resource :confirmation, only: [:show]
+    post :login, to: "login#create", as: "login"
   end
   devise_for :users, skip: :all, failure_app: "Authenticate::FailureAppController"
 end
