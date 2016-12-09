@@ -1,20 +1,29 @@
 # Management Accounts.
 class AccountsController < ApplicationController
-  include DeviseUtils
-  include DeviseAuthentications
+  include AuthenticationUtils
+
+  prepend_before_action :authorize!, only: [:show, :destroy]
 
   # Show an account info.
   #
   # @return [String] json.
   def show
+    account = resource
+    if params[:id].present?
+      account = User.find_by_id(params[:id])
+    end
+    render json: account, status: 200
   end
 
   # Create an account.
+  # params must includes these keys.
+  # Devise parameters. (name, email, password)
+  # Doorkeeper parameters (client_id, response_type, redirect_uri)
+  # Doorkeeper option params (scope, state).
   #
   # @return [String] json.
   def create
     self.resource = resource_class.new(sign_up_params)
-    binding.pry
     resource.save!
 
     set_user_id_to_params(resource)
@@ -47,6 +56,12 @@ class AccountsController < ApplicationController
   #
   # @return [String] json.
   def destroy
+    resource.destroy
+    sign_out
+    if doorkeeper_token.present?
+      doorkeeper_token.revoke
+    end
+    render json: "{ code: 'success' }", status: 200
   end
 
   private
@@ -55,6 +70,6 @@ class AccountsController < ApplicationController
   #
   # @return [ActionController::Parameters] params
   def sign_up_params
-    params.permit(:password, :password_confirmation, :name)
+    params.permit(:password, :password_confirmation, :name, :email)
   end
 end
