@@ -6,6 +6,8 @@ Rails.application.routes.draw do
       resource :password, only: [:update]
       resource :email, only: [:update]
     end
+
+    resource :confirmation, only: [:show]
   end
   devise_for :users, skip: :all, failure_app: "Authenticate::FailureAppController"
 end
