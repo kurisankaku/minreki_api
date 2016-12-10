@@ -45,6 +45,7 @@ group :development, :test do
 
   # Test framework.
   gem 'rspec-rails', '~> 3.5'
+  gem 'rspec-collection_matchers'
   gem 'factory_girl_rails'
 
   # Debug
@@ -67,7 +68,6 @@ group :test do
   # Use sqlite3 as the database for Active Record
   gem 'sqlite3'
   gem 'faker'
-  gem 'factory_girl_rails'
   gem 'database_cleaner'
   gem 'json_expressions'
   gem 'timecop'
