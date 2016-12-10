@@ -18,18 +18,6 @@ gem 'mysql2'
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 # gem 'rack-cors'
 
-# Use devise for Authentication.↲
-gem 'devise'
-
-# Use omniauth for OAuth login.↲
-gem 'omniauth'
-gem 'omniauth-facebook'
-gem 'omniauth-twitter'
-gem "omniauth-google-oauth2"
-
-# Use doorkeeper for OAuth Provider.
-gem 'doorkeeper'
-
 # logical delete.
 gem 'paranoia', '~> 2.2'
 

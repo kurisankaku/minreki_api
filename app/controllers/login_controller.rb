@@ -1,8 +1,5 @@
 # Login controller.
 class LoginController < ApplicationController
-  include AuthenticationUtils
-  prepend_before_action :allow_params_authentication!
-
   # Authenticate and Authorize specified account.
   # params must includes these keys.
   # Devise parameters. (name or email, password)

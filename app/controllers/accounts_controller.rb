@@ -1,7 +1,5 @@
 # Management Accounts.
 class AccountsController < ApplicationController
-  include AuthenticationUtils
-
   prepend_before_action :authorize!, only: [:show, :destroy]
 
   # Show an account info.
