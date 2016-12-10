@@ -2,6 +2,21 @@ class User < ApplicationRecord
   has_secure_password
   acts_as_paranoid
 
+  PASSWORD_FORMAT = /\A(?=.*\d)(?=.*[a-zA-Z])/x
+  EMAIL_FORMAT = /\A[a-zA-Z0-9_.+-]+[@][a-zA-Z0-9.-]+\z/
+  validates :password,
+    presence: true,
+    length: { minimum: 8 },
+    format: { with: PASSWORD_FORMAT },
+    confirmation: true
+  validates :name,
+    presence: true,
+    uniqueness: true,
+    length: { maximum: 128 }
+  validates :email,
+    presence: true,
+    uniqueness: true
+  validates :email, format: { with: EMAIL_FORMAT }, if: "email.present?"
   # after_commit :send_pending_notifications
   #
   # protected
