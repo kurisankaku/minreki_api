@@ -25,10 +25,13 @@ gem 'paranoia', '~> 2.2'
 gem 'kramdown'
 
 # log format.
-gem "lograge"
+gem 'lograge'
 
 # Brings convention over configuration to your JSON generation.
 gem 'active_model_serializers', '~> 0.10.0'
+
+# Seed gem.
+gem 'seed-fu'
 
 group :development, :test do
   # Use Puma as the app server
@@ -40,6 +43,11 @@ group :development, :test do
   # yardoc.
   gem 'yard'
 
+  # Test framework.
+  gem 'rspec-rails', '~> 3.5'
+  gem 'factory_girl_rails'
+
+  # Debug
   gem 'pry-rails'
   gem 'pry-doc'
   gem 'pry-byebug'
@@ -58,6 +66,12 @@ end
 group :test do
   # Use sqlite3 as the database for Active Record
   gem 'sqlite3'
+  gem 'faker'
+  gem 'factory_girl_rails'
+  gem 'database_cleaner'
+  gem 'json_expressions'
+  gem 'timecop'
+  gem 'webmock'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
