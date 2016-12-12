@@ -33,6 +33,9 @@ gem 'active_model_serializers', '~> 0.10.0'
 # Seed gem.
 gem 'seed-fu'
 
+# Simple, efficient background processing.
+gem 'sidekiq'
+
 group :development, :test do
   # Use Puma as the app server
   gem 'puma', '~> 3.0'
