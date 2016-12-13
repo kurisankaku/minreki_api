@@ -6,9 +6,8 @@ class AccountService
   # @return [User] created account.
   def create(params)
     user = User.new(sign_up_params(params))
-    user.save!
-    unless params[:no_confirm]
-    end
+    user.skip_confirmation_notification! if params[:skip_confirmation_notification]
+    user.tap(&:save!)
   end
 
   private
