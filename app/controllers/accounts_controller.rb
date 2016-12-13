@@ -21,10 +21,9 @@ class AccountsController < ApplicationController
   #
   # @return [String] json.
   def create
-    self.resource = resource_class.new(sign_up_params)
-    resource.save!
+    user = User.new(sign_up_params)
+    user.save!
 
-    set_user_id_to_params(resource)
     # Check if active for authentication.
     # If it needs mail confirmation, etc.., return false.
     if resource.active_for_authentication?
