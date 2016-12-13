@@ -4,3 +4,5 @@ AllCops:
     - 'config/**/*'
     - 'script/**/*'
     - 'vendor/**/*'
+Metrics/LineLength:
+    Enabled: false
