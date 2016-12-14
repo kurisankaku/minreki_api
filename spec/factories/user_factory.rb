@@ -5,5 +5,13 @@ FactoryGirl.define do
     email { Faker::Internet.email }
     password { "1a" + Faker::Internet.password(6) }
     failed_attempts { 0 }
+
+    transient do
+      confirm false
+    end
+
+    after(:build) do |user, evaluator|
+      user.skip_confirmation_notification! unless evaluator.confirm
+    end
   end
 end

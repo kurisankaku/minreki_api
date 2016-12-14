@@ -7,8 +7,8 @@ class User < ApplicationRecord
 
   before_create :generate_confirmation_token, if: :send_confirmation_notification?
   after_commit :send_confirmation_notification, on: :create, if: :send_confirmation_notification?
+  before_update :postpone_email_change_until_confirmation_and_regenerate_confirmation_token, if: :postpone_email_change?
   after_commit :send_reconfirmation_instructions, on: :update, if: :reconfirmation_required?
-  before_update :postpone_email_change_until_confirmation_and_regenerate_confirmation_token, :postpone_email_change?
 
   PASSWORD_FORMAT = /\A(?=.*\d)(?=.*[a-zA-Z])/x
   EMAIL_FORMAT = /\A[a-zA-Z0-9_.+-]+[@][a-zA-Z0-9.-]+\z/
@@ -26,14 +26,14 @@ class User < ApplicationRecord
             uniqueness: true
   validates :email, format: { with: EMAIL_FORMAT }, if: 'email.present?'
 
-  def initialize(opts = {})
-    @skip_confirmation_notification = opts[:skip_confirmation_notification] || false
-    @reconfirmation_required = opts[:skip_confirmation_notification] || false
-  end
-
-  # Call this method before create, if skip confirmation notification.
+  # Call this method before create or update email, if skip confirmation notification.
   def skip_confirmation_notification!
     @skip_confirmation_notification = true
+  end
+
+  # Call this method before create or update email, if no skip confirmation notification.
+  def no_skip_confirmation_notification!
+    @skip_confirmation_notification = false
   end
 
   private
@@ -42,7 +42,7 @@ class User < ApplicationRecord
   #
   # @return [Bool] result.
   def send_confirmation_notification?
-    @skip_confirmation_notification
+    !@skip_confirmation_notification
   end
 
   # Check whether postpone email change or not.
