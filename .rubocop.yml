@@ -6,3 +6,5 @@ AllCops:
     - 'vendor/**/*'
 Metrics/LineLength:
     Enabled: false
+StringLiterals:
+    EnforcedStyle: double_quotes
