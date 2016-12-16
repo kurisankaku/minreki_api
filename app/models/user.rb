@@ -5,7 +5,7 @@ class User < ApplicationRecord
   has_secure_password
   acts_as_paranoid
 
-  before_create :generate_confirmation_token, if: :send_confirmation_notification?
+  before_create :generate_confirmation_token_and_confirmation_sent_at, if: :send_confirmation_notification?
   after_commit :send_confirmation_notification, on: :create, if: :send_confirmation_notification?
   before_update :postpone_email_change_until_confirmation_and_regenerate_confirmation_token, if: :postpone_email_change?
   after_commit :send_reconfirmation_instructions, on: :update, if: :reconfirmation_required?
@@ -42,6 +42,27 @@ class User < ApplicationRecord
     self.confirmed_at = confirmed_time
   end
 
+  # Confirm email.
+  def confirm!
+    if confirmed? && unconfirmed_email.blank?
+      self.errors.add(:confirmed_at, :already_confirmed)
+      fail ActiveRecord::RecordInvalid.new(self)
+    end
+
+    if self.confirmation_sent_at + 1.hour < Time.zone.now
+      self.errors.add(:confirmed_at, :confirmation_expired)
+      fail ActiveRecord::RecordInvalid.new(self)
+    end
+
+    if unconfirmed_email.present?
+      self.email = self.unconfirmed_email
+      self.unconfirmed_email = nil
+    end
+    self.confirmed_at = Time.zone.now
+    self.confirmation_token = nil
+    self.tap(&:save!)
+  end
+
   private
 
   # Check whether sendo confirmation mail or not.
@@ -71,12 +92,13 @@ class User < ApplicationRecord
     self.unconfirmed_email = self.email
     self.email = self.email_was
     self.confirmation_token = nil
-    generate_confirmation_token
+    generate_confirmation_token_and_confirmation_sent_at
   end
 
   # Generate confirmation token.
-  def generate_confirmation_token
+  def generate_confirmation_token_and_confirmation_sent_at
     self.confirmation_token = SecureRandom.urlsafe_base64
+    self.confirmation_sent_at = Time.zone.now
   end
 
   # Send reconfirmation.
