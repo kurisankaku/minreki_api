@@ -11,7 +11,7 @@ FactoryGirl.define do
     end
 
     after(:build) do |user, evaluator|
-      user.skip_confirmation_notification! unless evaluator.confirm
+      user.skip_confirmation! unless evaluator.confirm
     end
   end
 end

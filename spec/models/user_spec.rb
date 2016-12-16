@@ -89,12 +89,21 @@ describe User do
     end
   end
 
+  describe "#confirmed?" do
+    it "is confirmed" do
+      expect(User.new(confirmed_at: Time.zone.now).confirmed?).to be true
+    end
+    it "is not confirmed" do
+      expect(User.new(confirmed_at: nil).confirmed?).to be false
+    end
+  end
+
   describe "#generate_confirmation_token" do
-    context "call #skip_confirmation_notification!" do
+    context "call #skip_confirmation!" do
       context "on create" do
         it "doesn't generate token" do
           user = build(:user, confirm: true, email: "email@test.test.com")
-          user.skip_confirmation_notification!
+          user.skip_confirmation!
           user.save!
           expect(user.confirmation_token).to be_nil
         end
@@ -102,13 +111,13 @@ describe User do
       context "on update" do
         let!(:user) { create :user, confirm: false, email: "email@test.test.com" }
         it "doesn't generate token" do
-          user.skip_confirmation_notification!
+          user.skip_confirmation!
           user.update!(name: "update_name")
           expect(user.confirmation_token).to be_nil
         end
       end
     end
-    context "not call #skip_confirmation_notification!" do
+    context "not call #skip_confirmation!" do
       context "on create" do
         it "generate token" do
           user = build(:user, confirm: true, email: "email@test.test.com")
@@ -127,13 +136,16 @@ describe User do
   end
 
   describe "#send_confirmation_notification" do
-    context "call #skip_confirmation_notification!" do
+    before { Timecop.freeze(Time.local(2016, 1, 1)) }
+
+    context "call #skip_confirmation!" do
       context "on create" do
         it "doesn't send confirmation mail" do
           expect(ConfirmationMailer).not_to receive(:confirmation_instructions)
           user = build(:user, confirm: true, email: "email@test.test.com")
-          user.skip_confirmation_notification!
+          user.skip_confirmation!
           user.save!
+          expect(user.confirmed_at).to eq Time.local(2016, 1, 1)
         end
       end
 
@@ -141,13 +153,13 @@ describe User do
         let!(:user) { create :user, confirm: false, email: "email@test.test.com" }
         it "doesn't send confirmation mail" do
           expect(ConfirmationMailer).not_to receive(:confirmation_instructions)
-          user.skip_confirmation_notification!
+          user.skip_confirmation!
           user.update!(name: "update_name")
         end
       end
     end
 
-    context "not call #skip_confirmation_notification!" do
+    context "not call #skip_confirmation!" do
       context "on create" do
         context "and commits" do
           it "send confirmation mail" do
@@ -157,6 +169,7 @@ describe User do
 
             user = build(:user, confirm: true, email: "email@test.test.com")
             user.save!
+            expect(user.confirmed_at).to be_nil
           end
         end
 
@@ -188,16 +201,16 @@ describe User do
   describe "#postpone_email_change_until_confirmation_and_regenerate_confirmation_token" do
     let!(:user) { create :user, confirm: false, email: "email@test.test.com" }
 
-    context "call #skip_confirmation_notification!" do
+    context "call #skip_confirmation!" do
       it "doesn't generates confirmation token and unconfirmed_email" do
-        user.skip_confirmation_notification!
+        user.skip_confirmation!
         user.update!(email: "update@test.test.com")
         expect(user.confirmation_token).to be_nil
         expect(user.unconfirmed_email).to be_nil
       end
     end
 
-    context "not call #skip_confirmation_notification" do
+    context "not call #skip_confirmation" do
       context "when email changed" do
         it "generates confirmation token and unconfirmed_email" do
           user.no_skip_confirmation_notification!
@@ -220,20 +233,22 @@ describe User do
   end
 
   describe "#send_reconfirmation_instructions" do
+    before { Timecop.freeze(Time.local(2016, 1, 1)) }
     let!(:user) { create :user, confirm: false, email: "email@test.test.com" }
 
-    context "call #skip_confirmation_notification!" do
+    context "call #skip_confirmation!" do
       context "when email changed" do
         it "desn't send confirmation mail and update email" do
           expect(ConfirmationMailer).not_to receive(:confirmation_instructions)
-          user.skip_confirmation_notification!
+          user.skip_confirmation!(Time.local(2016, 1, 2))
           user.update!(email: "update@test.test.com")
           expect(user.email).to eq "update@test.test.com"
+          expect(user.confirmed_at).to eq Time.local(2016, 1, 2)
         end
       end
     end
 
-    context "not call #skip_confirmation_notification" do
+    context "not call #skip_confirmation" do
       context "when email changed" do
         context "and commits" do
           it "sends confirmation mail and not update email, but update un_confirmed email" do
@@ -248,6 +263,7 @@ describe User do
             expect(user.unconfirmed_email).to be_present
             expect(user.email).to eq "email@test.test.com"
             expect(user.unconfirmed_email).to eq "update@test.test.com"
+            expect(user.confirmed_at).to eq Time.local(2016, 1, 1)
           end
         end
 

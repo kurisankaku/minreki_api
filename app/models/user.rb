@@ -26,14 +26,20 @@ class User < ApplicationRecord
             uniqueness: true
   validates :email, format: { with: EMAIL_FORMAT }, if: 'email.present?'
 
-  # Call this method before create or update email, if skip confirmation notification.
-  def skip_confirmation_notification!
-    @skip_confirmation_notification = true
-  end
-
   # Call this method before create or update email, if no skip confirmation notification.
   def no_skip_confirmation_notification!
     @skip_confirmation_notification = false
+  end
+
+  # Check whether it is confirmed.
+  def confirmed?
+    !!self.confirmed_at
+  end
+
+  # Call this method before create, if skip confirmation.
+  def skip_confirmation!(confirmed_time = Time.zone.now)
+    @skip_confirmation_notification = true
+    self.confirmed_at = confirmed_time
   end
 
   private
@@ -42,7 +48,7 @@ class User < ApplicationRecord
   #
   # @return [Bool] result.
   def send_confirmation_notification?
-    !@skip_confirmation_notification
+    !@skip_confirmation_notification && !confirmed?
   end
 
   # Check whether postpone email change or not.
