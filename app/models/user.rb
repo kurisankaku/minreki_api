@@ -28,6 +28,9 @@ class User < ApplicationRecord
             uniqueness: true
   validates :email, format: { with: EMAIL_FORMAT }, if: 'email.present?'
 
+  # token life time.
+  TOKEN_LIFE_TIME = 1.hour
+
   # Call this method before create or update email, if no skip confirmation notification.
   def no_skip_confirmation_notification!
     @skip_confirmation_notification = false
@@ -46,13 +49,15 @@ class User < ApplicationRecord
 
   # Confirm email.
   def confirm!
+    self.validate
+
     if confirmed? && unconfirmed_email.blank?
       self.errors.add(:confirmed_at, :already_confirmed)
       fail ActiveRecord::RecordInvalid.new(self)
     end
 
-    if self.confirmation_sent_at + 1.hour < Time.zone.now
-      self.errors.add(:confirmed_at, :confirmation_expired)
+    if self.confirmation_sent_at + TOKEN_LIFE_TIME < Time.zone.now
+      self.errors.add(:confirmation_token, :expired)
       fail ActiveRecord::RecordInvalid.new(self)
     end
 
@@ -62,6 +67,31 @@ class User < ApplicationRecord
     end
     self.confirmed_at = Time.zone.now
     self.confirmation_token = nil
+    self.tap(&:save!)
+  end
+
+  # Issue reset password token.
+  #
+  # @return [User] user.
+  def issue_reset_password_token!
+    self.reset_password_token = SecureRandom.urlsafe_base64
+    self.reset_password_sent_at = Time.zone.now
+    self.tap(&:save!)
+  end
+
+  # Reset password by token.
+  #
+  # @return [User] user.
+  def reset_password!
+    self.validate
+
+    if self.reset_password_sent_at + TOKEN_LIFE_TIME < Time.zone.now
+      self.errors.add(:reset_password_token, :expired)
+      fail ActiveRecord::RecordInvalid.new(self)
+    end
+
+    self.reset_password_token = nil
+    self.reset_password_sent_at = nil
     self.tap(&:save!)
   end
 

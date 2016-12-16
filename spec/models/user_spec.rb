@@ -316,21 +316,21 @@ describe User do
       end
     end
 
-    context "confirmation_sent_at + 1.hour is less than now time" do
-      it "is invalid confirmed_at" do
-        user.confirmation_sent_at = Time.zone.now - 61.minutes
+    context "confirmation_sent_at + TOKEN_LIFE_TIME is less than now time" do
+      it "is invalid confirmation_token" do
+        user.confirmation_sent_at = Time.zone.now - User::TOKEN_LIFE_TIME - 1.seconds
         begin
           user.confirm!
         rescue ActiveRecord::RecordInvalid => e
-          expect(e.record.errors.details[:confirmed_at]).to include(error: :confirmation_expired)
+          expect(e.record.errors.details[:confirmation_token]).to include(error: :expired)
         end
       end
     end
 
-    context "confirmation_sent_at + 1.hour is greater than now time" do
+    context "confirmation_sent_at + TOKEN_LIFE_TIME is greater than now time" do
       context "unconfirmed_email presented" do
         it "confirmed" do
-          user.confirmation_sent_at = Time.zone.now - 1.hour
+          user.confirmation_sent_at = Time.zone.now - User::TOKEN_LIFE_TIME
           user.unconfirmed_email = "update@mail.test.test"
           user.email = "email@mail.test.test"
           user.confirm!
@@ -343,7 +343,7 @@ describe User do
       end
       context "unconfirmed_email not presented" do
         it "confirmed" do
-          user.confirmation_sent_at = Time.zone.now - 1.hour
+          user.confirmation_sent_at = Time.zone.now - User::TOKEN_LIFE_TIME
           user.unconfirmed_email = nil
           user.email = "email@mail.test.test"
           user.confirm!
@@ -353,6 +353,46 @@ describe User do
           expect(user.confirmed_at).to eq Time.zone.now
           expect(user.confirmation_token).to be_nil
         end
+      end
+    end
+  end
+
+  describe "#issue_reset_password_token!" do
+    before { Timecop.freeze(Time.local(2016, 1, 1)) }
+    it "issues random token and issued time" do
+      user1 = build(:user).issue_reset_password_token!
+      user2 = build(:user).issue_reset_password_token!
+      expect(user1.reset_password_token).not_to eq user2.reset_password_token
+      expect(user1.reset_password_sent_at).to eq Time.now
+    end
+  end
+
+  describe "#reset_password!" do
+    let!(:user) { build :user }
+    before { Timecop.freeze(Time.local(2016, 1, 1)) }
+
+    context "reset_password_sent_at + TOKEN_LIFE_TIME is less than now time" do
+      it "is invalid confirmation_token" do
+        user.reset_password_sent_at = Time.zone.now - User::TOKEN_LIFE_TIME - 1.seconds
+        begin
+          user.reset_password!
+        rescue ActiveRecord::RecordInvalid => e
+          expect(e.record.errors.details[:reset_password_token]).to include(error: :expired)
+        end
+      end
+    end
+
+    context "reset_password_sent_at + TOKEN_LIFE_TIME is greater than now time" do
+      it "resets password" do
+        user.reset_password_sent_at = Time.zone.now - User::TOKEN_LIFE_TIME
+        user.password_confirmation = "Test12345678/"
+        user.password = "Test12345678/"
+        user.reset_password_token = "random token"
+        user.reset_password!
+
+        expect(user.authenticate("Test12345678/")).not_to be false
+        expect(user.reset_password_token).to be_nil
+        expect(user.reset_password_sent_at).to be_nil
       end
     end
   end
