@@ -15,6 +15,25 @@ module AccountService
       user.tap(&:save!)
     end
 
+    def authorize(params)
+      user = User.where(email: params[:account_name]).or(name: params[:account_name]).first
+      if user.locked?
+        fail BadRequestError.new(code: :account_locked, field: :account_name), "Account is locked."
+      end
+
+      if user.nil? || !user.authenticate(params[:password])
+        user.failed_attempts += 1
+        user.save!
+        fail BadRequestError.new(code: :invalid_account_name_or_password, field: :account_name), "Invalid account name or password."
+      end
+
+      user.last_sign_in_at = user.current_sign_in_at
+      user.current_sign_in_at = Time.zone.now
+      user.failed_attempts = 0
+      user.locked_at = nil
+      user.tap(&:save!)
+    end
+
     # Confirm email by token.
     #
     # @param [String] token token string.

@@ -9,6 +9,7 @@ class User < ApplicationRecord
   after_commit :send_confirmation_notification, on: :create, if: :send_confirmation_notification?
   before_update :postpone_email_change_until_confirmation_and_regenerate_confirmation_token, if: :postpone_email_change?
   after_commit :send_reconfirmation_instructions, on: :update, if: :reconfirmation_required?
+  before_update :lock_user, if: :failed_attepmts_over?
 
   PASSWORD_FORMAT = /\A(?=.*\d)(?=.*[a-zA-Z])/x
   EMAIL_FORMAT = /\A[a-zA-Z0-9_.+-]+[@][a-zA-Z0-9.-]+\z/
@@ -30,6 +31,8 @@ class User < ApplicationRecord
 
   # token life time.
   TOKEN_LIFE_TIME = 1.hour
+  # limit fails count
+  LIMIT_FAILS_COUNT = 5
 
   # Call this method before create or update email, if no skip confirmation notification.
   def no_skip_confirmation_notification!
@@ -144,5 +147,16 @@ class User < ApplicationRecord
     opts = self.unconfirmed_email.present? ? { to: self.unconfirmed_email } : {}
     mailer = ConfirmationMailer.confirmation_instructions(self, self.confirmation_token, opts)
     mailer.deliver_later
+  end
+
+  # Failed attempts over?
+  def failed_attepmts_over?
+    LIMIT_FAILS_COUNT < self.failed_attempts
+  end
+
+  def locked?
+  end
+
+  def lock_user
   end
 end
