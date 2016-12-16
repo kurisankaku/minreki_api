@@ -16,7 +16,9 @@ class User < ApplicationRecord
             presence: true,
             length: { minimum: 8 },
             format: { with: PASSWORD_FORMAT },
-            confirmation: true
+            confirmation: true,
+            if: "password.present?"
+  validates :password_confirmation, presence: true, if: "password.present?"
   validates :name,
             presence: true,
             uniqueness: true,

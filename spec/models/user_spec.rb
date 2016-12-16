@@ -40,6 +40,7 @@ describe User do
     context "password" do
       it "is valid when its length 8" do
         model.password = "1234567a"
+        model.password_confirmation = "1234567a"
         expect(model).to be_valid
       end
 

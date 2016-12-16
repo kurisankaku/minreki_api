@@ -4,6 +4,7 @@ FactoryGirl.define do
     name { Faker::Name.name }
     email { Faker::Internet.email }
     password { "1a" + Faker::Internet.password(6) }
+    password_confirmation { password }
     failed_attempts { 0 }
 
     transient do
