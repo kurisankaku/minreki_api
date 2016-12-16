@@ -6,7 +6,11 @@ module AccountService
     # @param [ActionController::Parameters] params parameters.
     # @return [User] created account.
     def create(params)
-      user = User.new(sign_up_params(params))
+      user = User.where(email: parmas[:email], confirmed_at: nil).first
+      if user.nil?
+        user = User.new(sign_up_params(params))
+      end
+
       user.skip_confirmation! if params[:skip_confirmation]
       user.tap(&:save!)
     end
