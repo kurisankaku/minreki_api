@@ -9,6 +9,7 @@ class User < ApplicationRecord
   after_commit :send_confirmation_notification, on: :create, if: :send_confirmation_notification?
   before_update :postpone_email_change_until_confirmation_and_regenerate_confirmation_token, if: :postpone_email_change?
   after_commit :send_reconfirmation_instructions, on: :update, if: :reconfirmation_required?
+  after_commit :send_reset_password_instructions, on: :update, if: :reset_password_instructions_require?
 
   PASSWORD_FORMAT = /\A(?=.*\d)(?=.*[a-zA-Z])/x
   EMAIL_FORMAT = /\A[a-zA-Z0-9_.+-]+[@][a-zA-Z0-9.-]+\z/
@@ -78,6 +79,7 @@ class User < ApplicationRecord
   #
   # @return [User] user.
   def issue_reset_password_token!
+    @reset_password_instructions_require = true
     self.reset_password_token = SecureRandom.urlsafe_base64
     self.reset_password_sent_at = Time.zone.now
     self.tap(&:save!)
@@ -135,7 +137,7 @@ class User < ApplicationRecord
   #
   # @return [Bool] result.
   def reconfirmation_required?
-    @reconfirmation_required && self.unconfirmed_email.present? && self.email.present?
+    !!@reconfirmation_required && self.unconfirmed_email.present? && self.email.present?
   end
 
   # Set unconfirmed_email and generate confirmation token.
@@ -169,5 +171,17 @@ class User < ApplicationRecord
   # Insert locked_at
   def lock_user
     locked_at = Time.zone.now
+  end
+
+  # Check whether reset password confirmation require.
+  def reset_password_instructions_require?
+    !!@reset_password_instructions_require && self.reset_password_token.present? && self.reset_password_sent_at.present?
+  end
+
+  # Send reset password instructions.
+  def send_reset_password_instructions
+    @reset_password_instructions_require = false
+    mailer = ConfirmationMailer.reset_password_instructions(self, self.reset_password_token)
+    mailer.deliver_later
   end
 end

@@ -359,11 +359,47 @@ describe User do
 
   describe "#issue_reset_password_token!" do
     before { Timecop.freeze(Time.local(2016, 1, 1)) }
-    it "issues random token and issued time" do
-      user1 = build(:user).issue_reset_password_token!
-      user2 = build(:user).issue_reset_password_token!
-      expect(user1.reset_password_token).not_to eq user2.reset_password_token
-      expect(user1.reset_password_sent_at).to eq Time.now
+    let!(:user) { create :user, confirm: false }
+
+    it "commits" do
+      message_delivery = instance_double(ActionMailer::MessageDelivery)
+      expect(ConfirmationMailer).to receive(:reset_password_instructions).with(instance_of(User), instance_of(String)).and_return(message_delivery)
+      expect(message_delivery).to receive(:deliver_later)
+
+      user.issue_reset_password_token!
+      expect(user.reset_password_token).to be_present
+      expect(user.reset_password_sent_at).to eq Time.zone.now
+    end
+
+    it "rollbacks" do
+      expect(ConfirmationMailer).not_to receive(:reset_password_instructions)
+      begin
+        ActiveRecord::Base.transaction do
+          user.issue_reset_password_token!
+          raise ActiveRecord::Rollback
+        end
+      rescue ActiveRecord::Rollback
+      end
+    end
+  end
+
+  describe "#reset_password_instructions_require" do
+    it "is false when @reset_password_instructions_require is false" do
+      user = User.new(reset_password_token: "token", reset_password_sent_at: Time.now)
+      user.instance_variable_set(:@reconfirmation_required, false)
+      expect(user.send(:reset_password_instructions_require?)).to be false
+    end
+
+    it "is false when reset_password_token is nil" do
+      user = User.new(reset_password_token: nil, reset_password_sent_at: Time.now)
+      user.instance_variable_set(:@reconfirmation_required, true)
+      expect(user.send(:reset_password_instructions_require?)).to be false
+    end
+
+    it "is false when reset_password_sent_at is nil" do
+      user = User.new(reset_password_token: "token", reset_password_sent_at: nil)
+      user.instance_variable_set(:@reconfirmation_required, true)
+      expect(user.send(:reset_password_instructions_require?)).to be false
     end
   end
 

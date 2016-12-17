@@ -2,11 +2,14 @@
 class ConfirmationMailer < ApplicationMailer
   def confirmation_instructions(record, token, opts={})
     @token = token
-    mail(to: to(record, opts), subject: subject_for(:confirmation_instructions))
+    @email = to(record, opts)
+    mail(to: @email, subject: subject_for(:confirmation_instructions))
   end
 
   def reset_password_instructions(record, token, opts={})
     @token = token
+    @email = record.email
+    mail(to: @email, subject: subject_for(:reset_password_instructions))
   end
 
   def unlock_instructions(record, token, opts={})
