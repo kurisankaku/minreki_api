@@ -109,6 +109,18 @@ module AccountService
       user.tap(&:issue_reset_password_token!)
     end
 
+    # Delete account
+    #
+    # @param [ActionController::Parameters] params
+    # @return [User] delted user.
+    def delete(params)
+      user = User.find_by_id(params[:id])
+      return nil if user.nil?
+
+      correct_password?(user, params[:password], :password)
+      user.destroy
+    end
+
     private
 
     # Sanitize params for sign_up action.
