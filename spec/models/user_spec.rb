@@ -430,4 +430,61 @@ describe User do
       end
     end
   end
+
+  describe "locked?" do
+    before { Timecop.freeze(Time.local(2016, 1, 1)) }
+    it "is false when locked_at is nil" do
+      user = User.new(locked_at: nil)
+      expect(user.locked?).to be false
+    end
+
+    it "is false when locked_at + LOCK_LIFE_TIME is less than now time." do
+      user = User.new(locked_at: Time.zone.now - User::LOCK_LIFE_TIME - 1.seconds)
+      expect(user.locked?).to be false
+    end
+
+    it "is true when locked_at + LOCK_LIFE_TIME eq now time." do
+      user = User.new(locked_at: Time.zone.now - User::LOCK_LIFE_TIME)
+      expect(user.locked?).to be true
+    end
+
+    it "is true when locked_at + LOCK_LIFE_TIME is greater than now time." do
+      user = User.new(locked_at: Time.zone.now - User::LOCK_LIFE_TIME + 1.seconds)
+      expect(user.locked?).to be true
+    end
+  end
+
+  describe "increase_failed_attempts!" do
+    before { Timecop.freeze(Time.local(2016, 1, 1)) }
+
+    it "increases failed_attempts" do
+      user = create(:user, failed_attempts: User::LIMIT_FAILS_COUNT - 1)
+      user.increase_failed_attempts!
+      expect(user.failed_attempts).to eq User::LIMIT_FAILS_COUNT
+    end
+
+    context "when failed_attempts greater than LIMIT_FAILS_COUNT" do
+      it "updates locked_at to now time" do
+        user = create(:user, failed_attempts: User::LIMIT_FAILS_COUNT + 1, locked_at: Time.local(2015, 12, 31))
+        user.increase_failed_attempts!
+        expect(user.locked_at).to eq Time.local(2016, 1, 1)
+      end
+    end
+
+    context "when failed_attempts eq LIMIT_FAILS_COUNT" do
+      it "updates locked_at" do
+        user = create(:user, failed_attempts: User::LIMIT_FAILS_COUNT, locked_at: Time.local(2015, 12, 31))
+        user.increase_failed_attempts!
+        expect(user.locked_at).to eq Time.local(2016, 1, 1)
+      end
+    end
+
+    context "when failed_attempts less than LIMIT_FAILS_COUNT" do
+      it "not updates locked_at" do
+        user = create(:user, failed_attempts: User::LIMIT_FAILS_COUNT - 1, locked_at: Time.local(2015, 12, 31))
+        user.increase_failed_attempts!
+        expect(user.locked_at).to eq Time.local(2015, 12, 31)
+      end
+    end
+  end
 end

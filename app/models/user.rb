@@ -107,7 +107,7 @@ class User < ApplicationRecord
 
   # Checkw whether user account is locked.
   def locked?
-    Time.zone.now <= self.locked_at + 1.hour
+    self.locked_at.present? && Time.zone.now <= self.locked_at + LOCK_LIFE_TIME
   end
 
   # Increase failed attempts.
