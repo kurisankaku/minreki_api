@@ -9,7 +9,6 @@ class User < ApplicationRecord
   after_commit :send_confirmation_notification, on: :create, if: :send_confirmation_notification?
   before_update :postpone_email_change_until_confirmation_and_regenerate_confirmation_token, if: :postpone_email_change?
   after_commit :send_reconfirmation_instructions, on: :update, if: :reconfirmation_required?
-  before_update :lock_user, if: :failed_attepmts_over?
 
   PASSWORD_FORMAT = /\A(?=.*\d)(?=.*[a-zA-Z])/x
   EMAIL_FORMAT = /\A[a-zA-Z0-9_.+-]+[@][a-zA-Z0-9.-]+\z/
@@ -33,6 +32,8 @@ class User < ApplicationRecord
   TOKEN_LIFE_TIME = 1.hour
   # limit fails count
   LIMIT_FAILS_COUNT = 5
+  # lock life time.
+  LOCK_LIFE_TIME = 1.hour
 
   # Call this method before create or update email, if no skip confirmation notification.
   def no_skip_confirmation_notification!
@@ -52,14 +53,14 @@ class User < ApplicationRecord
 
   # Confirm email.
   def confirm!
-    self.validate
-
     if confirmed? && unconfirmed_email.blank?
+      self.validate
       self.errors.add(:confirmed_at, :already_confirmed)
       fail ActiveRecord::RecordInvalid.new(self)
     end
 
     if self.confirmation_sent_at + TOKEN_LIFE_TIME < Time.zone.now
+      self.validate
       self.errors.add(:confirmation_token, :expired)
       fail ActiveRecord::RecordInvalid.new(self)
     end
@@ -82,19 +83,35 @@ class User < ApplicationRecord
     self.tap(&:save!)
   end
 
-  # Reset password by token.
+  # Reset password.
   #
+  # @param [String] password password
+  # @param [String] password_confirmation password_confirmation
   # @return [User] user.
-  def reset_password!
-    self.validate
+  def reset_password!(password, password_confirmation)
+    self.password = password
+    self.password_confirmation = password_confirmation
 
-    if self.reset_password_sent_at + TOKEN_LIFE_TIME < Time.zone.now
+    if self.reset_password_sent_at.present? && self.reset_password_sent_at + TOKEN_LIFE_TIME < Time.zone.now
+      self.validate
       self.errors.add(:reset_password_token, :expired)
       fail ActiveRecord::RecordInvalid.new(self)
     end
 
     self.reset_password_token = nil
     self.reset_password_sent_at = nil
+    self.tap(&:save!)
+  end
+
+  # Checkw whether user account is locked.
+  def locked?
+    Time.zone.now <= self.locked_at + 1.hour
+  end
+
+  # Increase failed attempts.
+  def increase_failed_attempts!
+    self.failed_attempts += 1
+    self.locked_at = Time.zone.now if LIMIT_FAILS_COUNT < self.failed_attempts
     self.tap(&:save!)
   end
 
@@ -149,14 +166,8 @@ class User < ApplicationRecord
     mailer.deliver_later
   end
 
-  # Failed attempts over?
-  def failed_attepmts_over?
-    LIMIT_FAILS_COUNT < self.failed_attempts
-  end
-
-  def locked?
-  end
-
+  # Insert locked_at
   def lock_user
+    locked_at = Time.zone.now
   end
 end

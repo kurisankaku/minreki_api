@@ -15,6 +15,10 @@ module AccountService
       user.tap(&:save!)
     end
 
+    # Authorize account.
+    #
+    # @param [ActionController::Parameters] params parameters.
+    # @return [User] user.
     def authorize(params)
       user = User.where(email: params[:account_name]).or(name: params[:account_name]).first
       if user.locked?
@@ -22,8 +26,7 @@ module AccountService
       end
 
       if user.nil? || !user.authenticate(params[:password])
-        user.failed_attempts += 1
-        user.save!
+        user.increase_failed_attempts!
         fail BadRequestError.new(code: :invalid_account_name_or_password, field: :account_name), "Invalid account name or password."
       end
 
@@ -91,9 +94,8 @@ module AccountService
       user = User.find_by_reset_password_token(params[:token])
       return nil if user.nil?
 
-      user.password = params[:password]
-      user.password_confirmation = params[:password_confirmation]
-      user.tap(&:reset_password!)
+      user.reset_password!(params[:password], params[:password_confirmation])
+      user
     end
 
     # Issue reset password token.

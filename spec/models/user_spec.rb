@@ -375,7 +375,7 @@ describe User do
       it "is invalid confirmation_token" do
         user.reset_password_sent_at = Time.zone.now - User::TOKEN_LIFE_TIME - 1.seconds
         begin
-          user.reset_password!
+          user.reset_password!("Password1234/", "Password1234/")
         rescue ActiveRecord::RecordInvalid => e
           expect(e.record.errors.details[:reset_password_token]).to include(error: :expired)
         end
@@ -385,10 +385,8 @@ describe User do
     context "reset_password_sent_at + TOKEN_LIFE_TIME is greater than now time" do
       it "resets password" do
         user.reset_password_sent_at = Time.zone.now - User::TOKEN_LIFE_TIME
-        user.password_confirmation = "Test12345678/"
-        user.password = "Test12345678/"
         user.reset_password_token = "random token"
-        user.reset_password!
+        user.reset_password!("Test12345678/", "Test12345678/")
 
         expect(user.authenticate("Test12345678/")).not_to be false
         expect(user.reset_password_token).to be_nil
