@@ -6,7 +6,7 @@ module AccountService
     # @param [ActionController::Parameters] params parameters.
     # @return [User] created account.
     def create(params)
-      user = User.where(email: parmas[:email], confirmed_at: nil).first
+      user = User.where(email: params[:email], confirmed_at: nil).first
       if user.nil?
         user = User.new(sign_up_params(params))
       end
@@ -20,12 +20,17 @@ module AccountService
     # @param [ActionController::Parameters] params parameters.
     # @return [User] user.
     def authorize(params)
-      user = User.where(email: params[:account_name]).or(name: params[:account_name]).first
+      user = User.where(email: params[:account_name]).or(User.where(name: params[:account_name])).first
+
+      if user.nil?
+        fail BadRequestError.new(code: :invalid_account_name_or_password, field: :account_name), "Invalid account name or password."
+      end
+
       if user.locked?
         fail BadRequestError.new(code: :account_locked, field: :account_name), "Account is locked."
       end
 
-      if user.nil? || !user.authenticate(params[:password])
+      if !user.authenticate(params[:password])
         user.increase_failed_attempts!
         fail BadRequestError.new(code: :invalid_account_name_or_password, field: :account_name), "Invalid account name or password."
       end
@@ -43,7 +48,9 @@ module AccountService
     # @return [User] confirmed user.
     def confirm_email(token)
       user = User.find_by_confirmation_token(token)
-      return nil if user.nil?
+      if user.nil?
+        fail BadRequestError.user_not_found(:token), "User not found by token."
+      end
 
       user.confirm!
     end
@@ -54,9 +61,11 @@ module AccountService
     # @return [User] updated user.
     def update_email(params)
       user = User.find_by_id(params[:id])
-      return nil if user.nil?
+      if user.nil?
+        fail BadRequestError.user_not_found(:id), "User not found."
+      end
 
-      user.update!(params[:email])
+      user.update!(email: params[:email])
       user
     end
 
@@ -66,7 +75,9 @@ module AccountService
     # @return [User] updated user.
     def update_name(params)
       user = User.find_by_id(params[:id])
-      return nil if user.nil?
+      if user.nil?
+        fail BadRequestError.user_not_found(:id), "User not found."
+      end
 
       correct_password?(user, params[:password], :password)
       user.update!(name: params[:name])
@@ -79,7 +90,9 @@ module AccountService
     # @return [User] updated user.
     def update_password(params)
       user = User.find_by_id(params[:id])
-      return nil if user.nil?
+      if user.nil?
+        fail BadRequestError.user_not_found(:id), "User not found."
+      end
 
       correct_password?(user, params[:old_password], :old_password)
       user.update!(update_password_params(params))
@@ -92,7 +105,9 @@ module AccountService
     # @return [User] updated user.
     def reset_password(params)
       user = User.find_by_reset_password_token(params[:token])
-      return nil if user.nil?
+      if user.nil?
+        fail BadRequestError.user_not_found(:token), "User not found by token."
+      end
 
       user.reset_password!(params[:password], params[:password_confirmation])
       user
@@ -104,7 +119,9 @@ module AccountService
     # @return [User] updated user.
     def issue_reset_password_token(params)
       user = User.find_by_email(params[:email])
-      return nil if user.nil?
+      if user.nil?
+        fail BadRequestError.new(code: :not_exists, field: :email), "Not exists email."
+      end
 
       user.tap(&:issue_reset_password_token!)
     end
@@ -115,7 +132,9 @@ module AccountService
     # @return [User] delted user.
     def delete(params)
       user = User.find_by_id(params[:id])
-      return nil if user.nil?
+      if user.nil?
+        fail BadRequestError.user_not_found(:id), "User not found."
+      end
 
       correct_password?(user, params[:password], :password)
       user.destroy
