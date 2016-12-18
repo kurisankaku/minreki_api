@@ -8,11 +8,11 @@ FactoryGirl.define do
     failed_attempts { 0 }
 
     transient do
-      confirm false
+      skip_confirm true
     end
 
     after(:build) do |user, evaluator|
-      user.skip_confirmation! unless evaluator.confirm
+      user.skip_confirmation! if evaluator.skip_confirm
     end
   end
 end

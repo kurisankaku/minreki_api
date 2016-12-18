@@ -103,7 +103,7 @@ describe User do
     context "call #skip_confirmation!" do
       context "on create" do
         it "doesn't generate token" do
-          user = build(:user, confirm: true, email: "email@test.test.com")
+          user = User.new(name: "test", email: "email@test.test.com", password: "Abcd1234/", password_confirmation: "Abcd1234/")
           user.skip_confirmation!
           user.save!
           expect(user.confirmation_token).to be_nil
@@ -111,7 +111,7 @@ describe User do
         end
       end
       context "on update" do
-        let!(:user) { create :user, confirm: false, email: "email@test.test.com" }
+        let!(:user) { create :user, skip_confirm: true, email: "email@test.test.com" }
         it "doesn't generate token" do
           user.skip_confirmation!
           user.update!(name: "update_name")
@@ -124,14 +124,14 @@ describe User do
       before { Timecop.freeze(Time.local(2016, 1, 1)) }
       context "on create" do
         it "generate token" do
-          user = build(:user, confirm: true, email: "email@test.test.com")
+          user = User.new(name: "test", email: "email@test.test.com", password: "Abcd1234/", password_confirmation: "Abcd1234/")
           user.save!
           expect(user.confirmation_token).to be_present
           expect(user.confirmation_sent_at).to eq Time.local(2016, 1, 1)
         end
       end
       context "on update and not changed email" do
-        let!(:user) { create :user, confirm: false, email: "email@test.test.com" }
+        let!(:user) { create :user, skip_confirm: true, email: "email@test.test.com" }
         it "doesn't generate token" do
           user.update!(name: "update_name")
           expect(user.confirmation_token).to be_nil
@@ -148,7 +148,7 @@ describe User do
       context "on create" do
         it "doesn't send confirmation mail" do
           expect(ConfirmationMailer).not_to receive(:confirmation_instructions)
-          user = build(:user, confirm: true, email: "email@test.test.com")
+          user = User.new(name: "test", email: "email@test.test.com", password: "Abcd1234/", password_confirmation: "Abcd1234/")
           user.skip_confirmation!
           user.save!
           expect(user.confirmed_at).to eq Time.local(2016, 1, 1)
@@ -156,7 +156,7 @@ describe User do
       end
 
       context "on update and not changed email" do
-        let!(:user) { create :user, confirm: false, email: "email@test.test.com" }
+        let!(:user) { create :user, skip_confirm: true, email: "email@test.test.com" }
         it "doesn't send confirmation mail" do
           expect(ConfirmationMailer).not_to receive(:confirmation_instructions)
           user.skip_confirmation!
@@ -173,7 +173,7 @@ describe User do
             expect(ConfirmationMailer).to receive(:confirmation_instructions).and_return(message_delivery)
             expect(message_delivery).to receive(:deliver_later)
 
-            user = build(:user, confirm: true, email: "email@test.test.com")
+            user = build(:user, skip_confirm: false, email: "email@test.test.com")
             user.save!
             expect(user.confirmed_at).to be_nil
           end
@@ -184,7 +184,7 @@ describe User do
             expect(ConfirmationMailer).not_to receive(:confirmation_instructions)
             begin
               ActiveRecord::Base.transaction do
-                user = build(:user, confirm: true, email: "email@test.test.com")
+                user = User.new(name: "test", email: "email@test.test.com", password: "Abcd1234/", password_confirmation: "Abcd1234/")
                 user.save!
                 raise ActiveRecord::Rollback
               end
@@ -195,7 +195,7 @@ describe User do
       end
 
       context "on update and not changed email" do
-        let!(:user) { create :user, confirm: false, email: "email@test.test.com" }
+        let!(:user) { create :user, skip_confirm: true, email: "email@test.test.com" }
         it "desn't send confirmation mail" do
           expect(ConfirmationMailer).not_to receive(:confirmation_instructions)
           user.update!(name: "update_name")
@@ -205,7 +205,7 @@ describe User do
   end
 
   describe "#postpone_email_change_until_confirmation_and_regenerate_confirmation_token" do
-    let!(:user) { create :user, confirm: false, email: "email@test.test.com" }
+    let!(:user) { create :user, skip_confirm: true, email: "email@test.test.com" }
 
     context "call #skip_confirmation!" do
       it "doesn't generates confirmation token and unconfirmed_email" do
@@ -243,7 +243,7 @@ describe User do
 
   describe "#send_reconfirmation_instructions" do
     before { Timecop.freeze(Time.local(2016, 1, 1)) }
-    let!(:user) { create :user, confirm: false, email: "email@test.test.com" }
+    let!(:user) { create :user, skip_confirm: true, email: "email@test.test.com" }
 
     context "call #skip_confirmation!" do
       context "when email changed" do
@@ -301,7 +301,7 @@ describe User do
   end
 
   describe "#confirm!" do
-    let!(:user) { build :user, confirm: true }
+    let!(:user) { build :user, skip_confirm: false }
     before { Timecop.freeze(Time.local(2016, 1, 1)) }
 
     context "already confirmed and unconfirmed_email is blank" do
@@ -359,7 +359,7 @@ describe User do
 
   describe "#issue_reset_password_token!" do
     before { Timecop.freeze(Time.local(2016, 1, 1)) }
-    let!(:user) { create :user, confirm: false }
+    let!(:user) { create :user, skip_confirm: true }
 
     it "commits" do
       message_delivery = instance_double(ActionMailer::MessageDelivery)
