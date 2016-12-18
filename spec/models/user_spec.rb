@@ -310,6 +310,7 @@ describe User do
         user.unconfirmed_email = nil
         begin
           user.confirm!
+          fail
         rescue ActiveRecord::RecordInvalid => e
           expect(e.record.errors.details[:confirmed_at]).to include(error: :already_confirmed)
         end
@@ -321,6 +322,7 @@ describe User do
         user.confirmation_sent_at = Time.zone.now - User::TOKEN_LIFE_TIME - 1.seconds
         begin
           user.confirm!
+          fail
         rescue ActiveRecord::RecordInvalid => e
           expect(e.record.errors.details[:confirmation_token]).to include(error: :expired)
         end
@@ -412,6 +414,7 @@ describe User do
         user.reset_password_sent_at = Time.zone.now - User::TOKEN_LIFE_TIME - 1.seconds
         begin
           user.reset_password!("Password1234/", "Password1234/")
+          fail
         rescue ActiveRecord::RecordInvalid => e
           expect(e.record.errors.details[:reset_password_token]).to include(error: :expired)
         end
