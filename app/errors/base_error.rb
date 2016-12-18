@@ -1,6 +1,8 @@
 # Error base class.
 class BaseError < StandardError
   attr_accessor :code
+  attr_accessor :field
+  attr_accessor :resource
 
   def initialize(opts = {})
     @code = opts[:code] || nil
