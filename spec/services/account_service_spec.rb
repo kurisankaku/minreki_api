@@ -64,8 +64,8 @@ describe AccountService do
     end
   end
 
-  describe "#authorize" do
-    subject { AccountService.authorize(params) }
+  describe "#authenticate" do
+    subject { AccountService.authenticate(params) }
     let!(:params) { ActionController::Parameters.new(attrs) }
     let!(:user) { create :user,
                   skip_confirm: true,

@@ -15,11 +15,11 @@ module AccountService
       user.tap(&:save!)
     end
 
-    # Authorize account.
+    # Authenticate account.
     #
     # @param [ActionController::Parameters] params parameters.
     # @return [User] user.
-    def authorize(params)
+    def authenticate(params)
       user = User.where(email: params[:account_name]).or(User.where(name: params[:account_name])).first
 
       if user.nil?
